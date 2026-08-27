@@ -8,6 +8,9 @@ export (int) var lane_index := 1
 export (float) var lane_distance := 2.5
 export (float) var lane_change_speed := 8.0
 export (int) var swipe_threshold := 50 # pixels
+export (String, FILE, "*.glb,*.tscn") var model_path := "res://models/character_hull_colored.glb"
+export (float) var model_scale := 1.0
+export (float) var model_y_offset := 0.0
 
 var touch_start := Vector2()
 var touch_active := false
@@ -15,6 +18,21 @@ var touch_active := false
 func _ready():
 	# Ensure the player starts at the target lane X
 	translation.x = (lane_index - 1) * lane_distance
+
+	# Try to load and instance the character model at runtime (if present)
+	var packed = ResourceLoader.load(model_path)
+	if packed and packed is PackedScene:
+		var inst = packed.instance()
+		inst.name = "CharacterModel"
+		inst.translation = Vector3(0, model_y_offset, 0)
+		inst.scale = Vector3(model_scale, model_scale, model_scale)
+		add_child(inst)
+		# Hide original placeholder MeshInstance if present
+		var mesh = get_node_or_null("MeshInstance")
+		if mesh:
+			mesh.hide()
+	else:
+		print("Character model not found at: ", model_path)
 
 func _physics_process(delta):
 	var desired_x = (lane_index - 1) * lane_distance
