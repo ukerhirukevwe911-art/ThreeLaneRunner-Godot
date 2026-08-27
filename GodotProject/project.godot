@@ -1,0 +1,6 @@
+[application]
+config/name="ThreeLaneRunner-Godot"
+run/main_scene="res://player.tscn"
+
+[rendering]
+quality/driver/driver_name="GLES3"
