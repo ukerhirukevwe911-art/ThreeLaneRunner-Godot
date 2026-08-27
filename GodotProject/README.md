@@ -1,11 +1,11 @@
-# ThreeLaneRunner-Godot
+# ThreeLaneRunner-Godot (Godot 4)
 
-This Godot 3 project now includes the character model pre-instanced in player.tscn with default transform/scale so it will appear correctly when you open the scene.
+This repository was updated to Godot 4-compatible scene/script files.
 
-Pre-configured values applied:
-- model_path = res://models/character_hull_colored.glb
-- model_scale = 1.02
-- model_y_offset = 0.90151494
-- player lanes: lane_distance = 2.5 (X = -2.5, 0, +2.5)
+What changed:
+- player.tscn root node converted to CharacterBody3D and the character model is pre-instanced with the recommended transform (translation=(0,0.90151494,0), scale=(1.02,1.02,1.02)).
+- Player.gd rewritten to Godot 4 GDScript using @export annotations and CharacterBody3D. Input handling supports touch swipes, mouse drag fallback, and keyboard.
 
-If you pull the repo and open GodotProject in Godot 3.x the player.tscn scene will already show the model with the recommended transform.
+How to use:
+- Open the GodotProject folder with Godot 4.x. The scene player.tscn should load. If the model import shows missing dependency, ensure res://models/character_hull_colored.glb exists and re-import it.
+- Tweak exported variables on the Player node: model_scale, model_y_offset, lane_distance, swipe_threshold.

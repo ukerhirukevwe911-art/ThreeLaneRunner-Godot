@@ -1,96 +1,82 @@
-extends KinematicBody
+extends CharacterBody3D
 
-# Three-lane runner controller for Godot 3 (3D)
-# Left swipe -> move left, Right swipe -> move right (correct mapping)
-# Lanes: 0 = left, 1 = center, 2 = right
+@export var lane_index: int = 1
+@export var lane_distance: float = 2.5
+@export var lane_change_speed: float = 8.0
+@export var swipe_threshold: int = 50
+@export_file("*.glb,*.tscn") var model_path := "res://models/character_hull_colored.glb"
+@export var model_scale: float = 1.02
+@export var model_y_offset: float = 0.90151494
 
-export (int) var lane_index := 1
-export (float) var lane_distance := 2.5
-export (float) var lane_change_speed := 8.0
-export (int) var swipe_threshold := 50 # pixels
-export (String, FILE, "*.glb,*.tscn") var model_path := "res://models/character_hull_colored.glb"
-export (float) var model_scale := 1.02
-export (float) var model_y_offset := 0.90151494
-
-var touch_start := Vector2()
+var touch_start := Vector2.ZERO
 var touch_active := false
 
-func _ready():
-	# Ensure the player starts at the target lane X
+func _ready() -> void:
 	translation.x = (lane_index - 1) * lane_distance
 
-	# If a CharacterModel node already exists in the scene (pre-instanced), configure it
 	var ch = get_node_or_null("CharacterModel")
 	if ch:
-		ch.translation = Vector3(0, model_y_offset, 0)
+		ch.translation = Vector3(0.0, model_y_offset, 0.0)
 		ch.scale = Vector3(model_scale, model_scale, model_scale)
 		return
 
-	# Try to load and instance the character model at runtime (if present)
-	var packed = ResourceLoader.load(model_path)
-	if packed and packed is PackedScene:
-		var inst = packed.instance()
+	var res = ResourceLoader.load(model_path)
+	if res and res is PackedScene:
+		var inst = res.instantiate()
 		inst.name = "CharacterModel"
-		inst.translation = Vector3(0, model_y_offset, 0)
+		inst.translation = Vector3(0.0, model_y_offset, 0.0)
 		inst.scale = Vector3(model_scale, model_scale, model_scale)
 		add_child(inst)
-		# Hide original placeholder MeshInstance if present
-		var mesh = get_node_or_null("MeshInstance")
+		var mesh = get_node_or_null("MeshInstance3D")
 		if mesh:
 			mesh.hide()
 	else:
 		print("Character model not found at: ", model_path)
 
-func _physics_process(delta):
+func _physics_process(delta: float) -> void:
 	var desired_x = (lane_index - 1) * lane_distance
-	var cur_x = translation.x
-	# Smoothly move toward the desired lane at a fixed rate (frame-rate independent)
-	cur_x = lerp(cur_x, desired_x, clamp(lane_change_speed * delta, 0, 1))
-	translation.x = cur_x
+	translation.x = lerp(translation.x, desired_x, clamp(lane_change_speed * delta, 0.0, 1.0))
 
-func _input(event):
-	# Keyboard input (A/D or Left/Right)
+func _input(event) -> void:
+	# Keyboard
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.scancode == KEY_LEFT or event.scancode == KEY_A:
 			_move_left()
 		elif event.scancode == KEY_RIGHT or event.scancode == KEY_D:
 			_move_right()
 
-	# Touch input
+	# Touch
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			touch_start = event.position
 			touch_active = true
 		else:
 			if touch_active:
-				var delta = event.position - touch_start
-				if abs(delta.x) >= swipe_threshold and abs(delta.x) > abs(delta.y):
-					if delta.x > 0:
-						_move_right() # swipe right -> move right
+				var d = event.position - touch_start
+				if abs(d.x) >= swipe_threshold and abs(d.x) > abs(d.y):
+					if d.x > 0:
+						_move_right()
 					else:
-						_move_left()  # swipe left -> move left
-				# reset
+						_move_left()
 				touch_active = false
 
-	# Mouse (desktop) swipe fallback
-	if event is InputEventMouseButton:
-		if event.button_index == BUTTON_LEFT:
-			if event.pressed:
-				touch_start = event.position
-				touch_active = true
-			else:
-				if touch_active:
-					var delta_m = get_viewport().get_mouse_position() - touch_start
-					if abs(delta_m.x) >= swipe_threshold and abs(delta_m.x) > abs(delta_m.y):
-						if delta_m.x > 0:
-							_move_right()
-						else:
-							_move_left()
-					# reset
-					touch_active = false
+	# Mouse fallback
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			touch_start = event.position
+			touch_active = true
+		else:
+			if touch_active:
+				var d = get_viewport().get_mouse_position() - touch_start
+				if abs(d.x) >= swipe_threshold and abs(d.x) > abs(d.y):
+					if d.x > 0:
+						_move_right()
+					else:
+						_move_left()
+				touch_active = false
 
-func _move_left():
+func _move_left() -> void:
 	lane_index = max(0, lane_index - 1)
 
-func _move_right():
+func _move_right() -> void:
 	lane_index = min(2, lane_index + 1)
