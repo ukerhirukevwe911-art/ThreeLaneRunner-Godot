@@ -9,8 +9,8 @@ export (float) var lane_distance := 2.5
 export (float) var lane_change_speed := 8.0
 export (int) var swipe_threshold := 50 # pixels
 export (String, FILE, "*.glb,*.tscn") var model_path := "res://models/character_hull_colored.glb"
-export (float) var model_scale := 1.0
-export (float) var model_y_offset := 0.0
+export (float) var model_scale := 1.02
+export (float) var model_y_offset := 0.90151494
 
 var touch_start := Vector2()
 var touch_active := false
@@ -18,6 +18,13 @@ var touch_active := false
 func _ready():
 	# Ensure the player starts at the target lane X
 	translation.x = (lane_index - 1) * lane_distance
+
+	# If a CharacterModel node already exists in the scene (pre-instanced), configure it
+	var ch = get_node_or_null("CharacterModel")
+	if ch:
+		ch.translation = Vector3(0, model_y_offset, 0)
+		ch.scale = Vector3(model_scale, model_scale, model_scale)
+		return
 
 	# Try to load and instance the character model at runtime (if present)
 	var packed = ResourceLoader.load(model_path)
